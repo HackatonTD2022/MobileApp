@@ -1,8 +1,11 @@
 package com.example.mobileclient;
 
+import static android.bluetooth.BluetoothAdapter.checkBluetoothAddress;
+
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,9 +20,11 @@ import androidx.core.app.ActivityCompat;
 import com.google.zxing.Result;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import me.dm7.barcodescanner.zxing.ZXingScannerView;
@@ -52,26 +57,8 @@ public class QRScan extends AppCompatActivity implements ZXingScannerView.Result
         mScannerView.stopCamera();
     }
 
-    List<BluetoothDevice> btDevices = new ArrayList<>();
-
-    // Create a BroadcastReceiver for ACTION_FOUND.
-    private final BroadcastReceiver receiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                // Discovery has found a device. Get the BluetoothDevice
-                // object and its info from the Intent.
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                btDevices.add(device);
-            }
-        }
-    };
-
     @Override
     public void handleResult(Result result) {
-        // Do something with the result here
-        // Prints scan results
-
         //Toast.makeText(this, result.getText(), Toast.LENGTH_LONG).show();
 
         //If you would like to resume scanning, call this method below:
@@ -91,13 +78,13 @@ public class QRScan extends AppCompatActivity implements ZXingScannerView.Result
             String line = scanner.nextLine();
             switch (it) {
                 case 0:
-                    serverUUID = line.substring(line.lastIndexOf(' '));
+                    serverUUID = line.substring(line.lastIndexOf(' ') + 1);
                     break;
                 case 1:
-                    serverAddress = line.substring(line.lastIndexOf(' '));
+                    serverAddress = line.substring(line.lastIndexOf(' ') + 1);
                     break;
                 case 2:
-                    serverName = line.substring(line.lastIndexOf(' '));
+                    serverName = line.substring(line.lastIndexOf(' ') + 1);
                     break;
             }
             it++;
@@ -108,28 +95,33 @@ public class QRScan extends AppCompatActivity implements ZXingScannerView.Result
             BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             if(!bluetoothAdapter.isEnabled())
                 bluetoothAdapter.enable();
-            bluetoothAdapter.startDiscovery();
 
-            // Register for broadcasts when a device is discovered.
-            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            registerReceiver(receiver, filter);
-            boolean flag = true;
-
-            BluetoothDevice server = null;
-
-            while (flag) {
-                for(BluetoothDevice device : btDevices) {
-                    if(device.getName().equals(serverName)) {
-                        Toast.makeText(this, "Server found", Toast.LENGTH_LONG).show();
-                        server = device;
-                        flag = false;
-                        break;
-                    }
-                }
-                Thread.sleep(100);
+            if(!checkBluetoothAddress(serverAddress)) {
+                throw new RuntimeException("Invalid bluetooth address");
             }
 
-        } catch (SecurityException | InterruptedException e) {
+            BluetoothDevice server = bluetoothAdapter.getRemoteDevice(serverAddress);
+
+            /*try {
+                BluetoothDevice server = bluetoothAdapter.getRemoteDevice(serverAddress);
+
+                BluetoothSocket socket = server.createRfcommSocketToServiceRecord(UUID.fromString(serverUUID));
+                socket.connect();
+
+            } catch (IOException | SecurityException e) {
+                e.printStackTrace();
+            }*/
+
+            Intent intent = new Intent(this, AuthActivity.class);
+            intent.putExtra("Server", server);
+            intent.putExtra("SocketUUID", serverUUID);
+            startActivity(intent);
+
+                        //ConnectThread connectThread = new ConnectThread(server, socket);
+            //connectThread.start();
+
+
+        } catch (SecurityException e) {
             Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
         }
 

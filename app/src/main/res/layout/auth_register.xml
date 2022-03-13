@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical" >
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_weight="1" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/TextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:hint="Enter username" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="10dp"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/SubmitButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="70dp"
+        android:layout_marginRight="70dp"
+        android:layout_weight="1"
+        android:text="Submit" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="450dp"
+        android:layout_weight="1" />
+</LinearLayout>
