@@ -32,6 +32,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -65,7 +66,7 @@ public class AuthActivity extends AppCompatActivity {
         }
     }
 
-    private ArrayList<User> userList;
+    private List<User> userList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,20 +74,7 @@ public class AuthActivity extends AppCompatActivity {
 
         securityCap = new AESSecurityCap();
 
-        // deserialize user list.
-        try {
-            FileInputStream fileIn = new FileInputStream("users.db");
-            ObjectInputStream in = new ObjectInputStream(fileIn);
-            userList = (ArrayList<User>) in.readObject();
-            in.close();
-            fileIn.close();
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        if(Objects.isNull(userList))
-            userList = new ArrayList<>();
-
+        deserializeUsers();
 
         Intent intent = getIntent();
 
@@ -127,22 +115,41 @@ public class AuthActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        sendToServer("close");
-
+    private void serializeUsers() {
         // serialize user list
         try {
-            FileOutputStream fileOut = new FileOutputStream("users.db");
+            FileOutputStream fileOut = getApplicationContext().openFileOutput("users.db", Context.MODE_PRIVATE);;
             ObjectOutputStream out = new ObjectOutputStream(fileOut);
             out.writeObject(userList);
             out.close();
+            out.flush();
             fileOut.close();
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    private void deserializeUsers() {
+        // deserialize user list.
+        try {
+            FileInputStream fileIn = getApplicationContext().openFileInput("users.db");;
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+            userList = (List<User>) in.readObject();
+            in.close();
+            fileIn.close();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        if(Objects.isNull(userList))
+            userList = new ArrayList<>();
+    }
+
+    @Override
+    protected void onDestroy() {
+        sendToServer("close");
+        serializeUsers();
         super.onDestroy();
     }
 
@@ -214,7 +221,7 @@ public class AuthActivity extends AppCompatActivity {
     // Login
     public class UsersAdapter extends ArrayAdapter<User> {
         AuthActivity authActivity = null;
-        public UsersAdapter(Context context, ArrayList<User> users, AuthActivity activity) {
+        public UsersAdapter(Context context, List<User> users, AuthActivity activity) {
             super(context, 0, users);
             authActivity = activity;
         }
@@ -235,11 +242,6 @@ public class AuthActivity extends AppCompatActivity {
             return convertView;
         }
     }
-
-    /*private void loginUser(User user) {
-
-    }*/
-
 
     private void logOnClick(View view) {
         setContentView(R.layout.auth_login);
