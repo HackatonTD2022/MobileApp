@@ -161,6 +161,7 @@ public class AuthActivity extends AppCompatActivity {
 
         if (doubleBackToExitPressedOnce) {
             super.onBackPressed();
+            finishAndRemoveTask();
             return;
         }
 
