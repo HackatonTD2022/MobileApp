@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +37,7 @@ import java.util.UUID;
 
 public class AuthActivity extends AppCompatActivity {
 
+    private boolean doubleBackToExitPressedOnce = false;
     private BluetoothDevice server = null;
     private BluetoothSocket socket = null;
     private AESSecurityCap securityCap = null;
@@ -103,7 +106,7 @@ public class AuthActivity extends AppCompatActivity {
 
             //initPubKeys();
 
-            onBackPressed();
+            showStart();
 
         } catch (IOException | SecurityException e) {
             e.printStackTrace();
@@ -143,14 +146,28 @@ public class AuthActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    @Override
-    public void onBackPressed() {
+    private void showStart() {
         setContentView(R.layout.auth_start);
         Button regBtn = (Button) findViewById(R.id.RegisterButton);
         Button logBtn = (Button) findViewById(R.id.LoginButton);
 
         regBtn.setOnClickListener(this::regOnClick);
         logBtn.setOnClickListener(this::logOnClick);
+    }
+
+    @Override
+    public void onBackPressed() {
+        showStart();
+
+        if (doubleBackToExitPressedOnce) {
+            super.onBackPressed();
+            return;
+        }
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show();
+
+        new Handler(Looper.getMainLooper()).postDelayed(() -> doubleBackToExitPressedOnce = false, 2000);
     }
 
     // Registration
